@@ -1,0 +1,150 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Fourier
+#pragma kernel FourierInverse
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> rtFourierSpectrum;
+RWTexture2D<float4> rtFourierPhase;
+
+RWTexture2D<float4> rtFourierInverse;
+
+//临时测试纹理
+RWTexture2D<float4> rtReal;
+RWTexture2D<float4> rtImaginary; //
+
+Texture2D<float4> originalImg;
+
+int TextureSize = 512;
+
+// Complex
+struct Complex
+{
+    float real;
+    float imaginary;
+};
+
+Complex getComplex(float num1, float num2){
+    Complex c;
+    c.real = num1;
+    c.imaginary = num2;
+    return c;
+}
+
+Complex getAdd(Complex c, Complex o){
+    c.real = c.real + o.real;
+    c.imaginary = c.imaginary + o.imaginary;
+    return c;
+}
+
+Complex getSubtract(Complex c,Complex o){
+    c.real = c.real - o.real;
+    c.imaginary = c.imaginary - o.imaginary;
+    return c;
+}
+    
+Complex getMultiply(Complex c,Complex o){
+    float tmp = c.real * o.real - c.imaginary * o.imaginary;
+    c.imaginary = c.real * o.imaginary + c.imaginary * o.real;
+    c.real = tmp;
+    return c;
+}
+
+Complex getMultiplyFloat(Complex c,float x){
+    c.real = c.real *x;
+    c.imaginary = c.imaginary * x;
+    return c;
+}
+
+//欧拉公式 e^(ix)=cosx+isinx
+Complex getEuler(float x) {
+    Complex c;
+    c.real = cos(x);
+    c.imaginary = sin(x);
+    return c;
+}
+
+int2 getCoordinate(int x, int y) {
+     x = x - 31;
+     y = y - 31;
+     return int2(x,y);
+}
+
+[numthreads(16,16,1)]
+void Fourier (uint3 id : SV_DispatchThreadID)
+{
+    
+    
+    float flag = -1 * 2 * 3.14 / TextureSize;
+    int2 coord = id.xy;//getCoordinate(id.x,id.y);//
+    
+    Complex sumRow;
+    sumRow.real = 0;
+    sumRow.imaginary = 0;
+
+    for(int i = 0; i< TextureSize; i++) { // 循环当前行
+        Complex complexU = getEuler(flag*i*coord.x); //先算当前行首位的的欧拉数 下面列积分后要乘这个数
+        
+        Complex sumColumn;
+        sumColumn.real = 0;
+        sumColumn.imaginary = 0;
+        for(int j = 0; j < TextureSize; j++) { // 循环每行对应的列
+            Complex complexV = getEuler(flag*j*coord.y);// 当前像素的欧拉数 - 2 π * v * y / Len
+            complexV = getMultiplyFloat(complexV, originalImg[int2(i,j)].r);
+            sumColumn = getAdd(sumColumn,complexV); // 积分
+        }
+
+        sumRow = getAdd(sumRow,getMultiply(sumColumn, complexU)); //列积分的结果去乘开始那个行上那个欧拉公式算出来的复数
+    }
+    
+    float amplitude = sqrt(sumRow.real * sumRow.real + sumRow.imaginary * sumRow.imaginary);
+    
+    float phase = atan2(sumRow.imaginary , sumRow.real);
+
+    rtFourierSpectrum[id.xy] = amplitude/TextureSize;//clamp(spectrum/TextureSize,0,100);
+    rtFourierPhase[id.xy] = phase;
+
+    rtReal[id.xy] = amplitude * cos(phase);
+    rtImaginary[id.xy] = amplitude * sin(phase);
+    
+}
+
+
+[numthreads(16,16,1)]
+void FourierInverse(uint3 id : SV_DispatchThreadID)
+{
+    float value = 0;
+    
+    float flag = 2 * 3.14 / TextureSize;
+    int2 coord = id.xy;//getCoordinate(id.x,id.y);//
+    
+    Complex sumRow;
+    sumRow.real = 0;
+    sumRow.imaginary = 0;
+
+    for(int i = 0; i< TextureSize; i++) { // 循环当前行
+        Complex complexU = getEuler(flag*i*coord.x); //先算当前行首位的的欧拉数 下面列积分后要乘这个数
+        
+        Complex sumColumn;
+        sumColumn.real = 0;
+        sumColumn.imaginary = 0;
+        for(int j = 0; j < TextureSize; j++) { // 循环每行对应的列
+            Complex complexV = getEuler(flag*j*coord.y);// 当前像素的欧拉数 - 2 π * v * y / Len
+            
+            Complex sampleComplex;
+            //实部虚部、频谱相位是有相互转换关系的，幅度是A，相位是ω的话，实部就是A*cos ω，虚部就是A*sin ω
+            float amplitude = rtFourierSpectrum[int2(i,j)].r;
+            float phase = rtFourierPhase[int2(i,j)].r;
+            sampleComplex.real = amplitude * cos(phase);
+            sampleComplex.imaginary = amplitude * sin(phase);;
+            
+            complexV = getMultiply(complexV,sampleComplex);
+            sumColumn = getAdd(sumColumn,complexV); // 积分
+        }
+        sumRow = getAdd(sumRow,getMultiply(sumColumn, complexU)); //列积分的结果去乘开始那个行上那个欧拉公式算出来的复数
+    }
+    
+    value = sqrt(sumRow.real * sumRow.real + sumRow.imaginary * sumRow.imaginary);
+    rtFourierInverse[id.xy] = value/(TextureSize);
+    
+}
