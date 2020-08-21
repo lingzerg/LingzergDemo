@@ -76,34 +76,35 @@ void Fourier (uint3 id : SV_DispatchThreadID)
     
     
     float flag = -1 * 2 * 3.14 / TextureSize;
-    int2 coord = id.xy;//getCoordinate(id.x,id.y);//
+    int2 coord = id.xy;//getCoordinate(id.x,id.y); //替换这里可以把复平面移动到中间
     
-    Complex sumRow;
+    Complex sumRow;//定义一个复数,用与积分
     sumRow.real = 0;
     sumRow.imaginary = 0;
 
     for(int i = 0; i< TextureSize; i++) { // 循环当前行
-        Complex complexU = getEuler(flag*i*coord.x); //先算当前行首位的的欧拉数 下面列积分后要乘这个数
+        Complex complexU = getEuler(flag*i*coord.x); //先算当前行对应列的首位像素的欧拉数, 下面列积分后要乘这个数
         
-        Complex sumColumn;
+        Complex sumColumn;// 定义一个复数,用于列的积分
         sumColumn.real = 0;
         sumColumn.imaginary = 0;
         for(int j = 0; j < TextureSize; j++) { // 循环每行对应的列
-            Complex complexV = getEuler(flag*j*coord.y);// 当前像素的欧拉数 - 2 π * v * y / Len
-            complexV = getMultiplyFloat(complexV, originalImg[int2(i,j)].r);
+            Complex complexV = getEuler(flag*j*coord.y); // 计算当前像素的欧拉数 - 2 π * v * y / Len
+            complexV = getMultiplyFloat(complexV, originalImg[int2(i,j)].r); // 用欧拉数乘以当前的振幅, 对纹理采样得到的结果就是振幅
             sumColumn = getAdd(sumColumn,complexV); // 积分
         }
 
-        sumRow = getAdd(sumRow,getMultiply(sumColumn, complexU)); //列积分的结果去乘开始那个行上那个欧拉公式算出来的复数
+        sumRow = getAdd(sumRow,getMultiply(sumColumn, complexU)); //列积分的结果去乘开始那个行上那个欧拉公式算出来的复数, 然后积分
     }
     
-    float amplitude = sqrt(sumRow.real * sumRow.real + sumRow.imaginary * sumRow.imaginary);
+    float amplitude = sqrt(sumRow.real * sumRow.real + sumRow.imaginary * sumRow.imaginary); // 振幅
     
-    float phase = atan2(sumRow.imaginary , sumRow.real);
+    float phase = atan2(sumRow.imaginary , sumRow.real); //相位
 
-    rtFourierSpectrum[id.xy] = amplitude/TextureSize;//clamp(spectrum/TextureSize,0,100);
+    rtFourierSpectrum[id.xy] = amplitude/(TextureSize*TextureSize);//clamp(spectrum/TextureSize,0,100); // 这里除以TextureSize是为了好看, 这里放到下面除也可以
     rtFourierPhase[id.xy] = phase;
 
+    //对两个RT赋值, 你也可以存到一个RT的两个通道里, 放到两个RT上是为了看着方便
     rtReal[id.xy] = amplitude * cos(phase);
     rtImaginary[id.xy] = amplitude * sin(phase);
     
@@ -113,8 +114,6 @@ void Fourier (uint3 id : SV_DispatchThreadID)
 [numthreads(16,16,1)]
 void FourierInverse(uint3 id : SV_DispatchThreadID)
 {
-    float value = 0;
-    
     float flag = 2 * 3.14 / TextureSize;
     int2 coord = id.xy;//getCoordinate(id.x,id.y);//
     
@@ -135,16 +134,17 @@ void FourierInverse(uint3 id : SV_DispatchThreadID)
             //实部虚部、频谱相位是有相互转换关系的，幅度是A，相位是ω的话，实部就是A*cos ω，虚部就是A*sin ω
             float amplitude = rtFourierSpectrum[int2(i,j)].r;
             float phase = rtFourierPhase[int2(i,j)].r;
-            sampleComplex.real = amplitude * cos(phase);
-            sampleComplex.imaginary = amplitude * sin(phase);;
+
+            sampleComplex.real = amplitude * cos(phase); // 根据公式 a * cos(Phase)  还原实部
+            sampleComplex.imaginary = amplitude * sin(phase);; // 根据公式 a * sin(Phase)  还原回去虚部
             
-            complexV = getMultiply(complexV,sampleComplex);
+            complexV = getMultiply(complexV,sampleComplex); //和该位置的欧拉数相乘
             sumColumn = getAdd(sumColumn,complexV); // 积分
         }
         sumRow = getAdd(sumRow,getMultiply(sumColumn, complexU)); //列积分的结果去乘开始那个行上那个欧拉公式算出来的复数
     }
     
-    value = sqrt(sumRow.real * sumRow.real + sumRow.imaginary * sumRow.imaginary);
-    rtFourierInverse[id.xy] = value/(TextureSize);
+    float value = sqrt(sumRow.real * sumRow.real + sumRow.imaginary * sumRow.imaginary); // 求模长 就是求振幅
+    rtFourierInverse[id.xy] = value;
     
 }
