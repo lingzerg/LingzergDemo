@@ -2,6 +2,11 @@
 #pragma kernel Fourier
 #pragma kernel FourierInverse
 
+#pragma kernel FastFourier
+
+#pragma kernel FastFourierH
+#pragma kernel FastFourierV
+
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 RWTexture2D<float4> rtFourierSpectrum;
@@ -11,11 +16,17 @@ RWTexture2D<float4> rtFourierInverse;
 
 //临时测试纹理
 RWTexture2D<float4> rtReal;
-RWTexture2D<float4> rtImaginary; //
+RWTexture2D<float4> rtImaginary;
+
+RWTexture2D<float4> InputRT;
+RWTexture2D<float4> OutputRT;
 
 Texture2D<float4> originalImg;
 
 int TextureSize = 512;
+int Ns = 0; //Ns = pow(2,m-1); m为第几阶段
+
+#define PI 3.14159274f
 
 // Complex
 struct Complex
@@ -65,8 +76,8 @@ Complex getEuler(float x) {
 }
 
 int2 getCoordinate(int x, int y) {
-     x = x - 31;
-     y = y - 31;
+    x = x - TextureSize/2;
+    y = y - TextureSize/2;
      return int2(x,y);
 }
 
@@ -101,7 +112,7 @@ void Fourier (uint3 id : SV_DispatchThreadID)
     
     float phase = atan2(sumRow.imaginary , sumRow.real); //相位
 
-    rtFourierSpectrum[id.xy] = amplitude/(TextureSize*TextureSize);//clamp(spectrum/TextureSize,0,100); // 这里除以TextureSize是为了好看, 这里放到下面除也可以
+    rtFourierSpectrum[id.xy] = amplitude/TextureSize;//clamp(spectrum/TextureSize,0,100); // 这里除以TextureSize是为了好看, 这里放到下面除也可以
     rtFourierPhase[id.xy] = phase;
 
     //对两个RT赋值, 你也可以存到一个RT的两个通道里, 放到两个RT上是为了看着方便
@@ -145,6 +156,30 @@ void FourierInverse(uint3 id : SV_DispatchThreadID)
     }
     
     float value = sqrt(sumRow.real * sumRow.real + sumRow.imaginary * sumRow.imaginary); // 求模长 就是求振幅
-    rtFourierInverse[id.xy] = value;
+    rtFourierInverse[id.xy] = value / TextureSize; // 这里实际上是应该是 除(TextureSize*TextureSize), 但是为了频域好看,把一个TextureSize 移到了正傅里叶变换里
     
 }
+
+//快速傅里叶变换, 纵向处理
+[numthreads(16, 16, 1)]
+void FastFourier(uint3 id : SV_DispatchThreadID)
+{
+    
+
+}
+
+//快速傅里叶变换,横向处理
+[numthreads(16, 16, 1)]
+void FastFourierH(uint3 id : SV_DispatchThreadID)
+{
+    
+    
+}
+
+//快速傅里叶变换, 纵向处理
+[numthreads(16, 16, 1)]
+void FastFourierV(uint3 id : SV_DispatchThreadID)
+{
+   
+}
+
