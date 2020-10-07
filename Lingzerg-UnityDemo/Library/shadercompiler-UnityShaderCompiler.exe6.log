@@ -1,6 +1,23 @@
 Base path: 'C:/Program Files/Unity/Hub/Editor/2019.4.8f1/Editor/Data', plugins path 'C:/Program Files/Unity/Hub/Editor/2019.4.8f1/Editor/Data/PlaybackEngines'
 Cmd: initializeCompiler
+Cmd: compileSnippet
+  api=4 type=1 insize=11846 outsize=4538 kw=SHADOWS_SPLIT_SPHERES SHADOWS_SINGLE_CASCADE pd=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR ok=1
 Cmd: compileComputeKernel
-  api=4 insize=6020 outsize=1633 ok=1
+  error: 2 plat 4 at Fourier.compute(163): array dimensions must be literal scalar expressions
+  api=4 insize=6662 outsize=0 ok=0
+Cmd: compileComputeKernel
+  error: 2 plat 4 at Fourier.compute(163): array dimensions must be literal scalar expressions
+  api=4 insize=6982 outsize=0 ok=0
+Cmd: compileComputeKernel
+  error: 2 plat 4 at Fourier.compute(165): array dimensions must be literal scalar expressions
+  api=4 insize=7058 outsize=0 ok=0
+Cmd: compileComputeKernel
+  error: 1 plat 4 at Fourier.compute(186): 'getEuler': conversion from larger type to smaller, possible loss of data
+  error: 2 plat 4 at Fourier.compute(200): cannot implicitly convert from 'const struct Complex' to 'float4'
+  api=4 insize=7042 outsize=0 ok=0
+Cmd: compileComputeKernel
+  error: 1 plat 4 at Fourier.compute(186): 'getEuler': conversion from larger type to smaller, possible loss of data
+  error: 2 plat 4 at Fourier.compute(200): cannot implicitly convert from 'const struct Complex' to 'float4'
+  api=4 insize=7042 outsize=0 ok=0
 
 Quitting shader compiler process

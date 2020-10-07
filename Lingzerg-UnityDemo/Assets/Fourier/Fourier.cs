@@ -22,33 +22,58 @@ public class Fourier : MonoBehaviour
     
     int GRID = 32;
 
+    RenderTexture rtFourierSpectrum, rtFourierPhase, rtReal, rtImaginary, rtFourierInverse;
+
     void Start()
     {
-        RenderTexture rtFourierSpectrum = CreateRenderTexture(TextureSize);
+        rtFourierSpectrum = CreateRenderTexture(TextureSize);
         //Spectrum
         //Phase
 
-        RenderTexture rtFourierPhase = CreateRenderTexture(TextureSize);
+        rtFourierPhase = CreateRenderTexture(TextureSize);
 
-        RenderTexture rtReal = CreateRenderTexture(TextureSize);
-        RenderTexture rtImaginary = CreateRenderTexture(TextureSize);
-        //
-        RenderTexture rtFourierInverse = CreateRenderTexture(TextureSize);
+        rtReal = CreateRenderTexture(TextureSize);
+        rtImaginary = CreateRenderTexture(TextureSize);
+        
+        rtFourierInverse = CreateRenderTexture(TextureSize);
 
         _compute.SetInt("TextureSize",TextureSize);
 
         /** DFT start **/
-        DFTStart(rtFourierSpectrum, rtReal,  rtImaginary,  rtFourierPhase);
+        //DFTStart(rtFourierSpectrum, rtReal,  rtImaginary,  rtFourierPhase);
         /** DFT end **/
 
         /** IDFT start **/
-        IDFTStart(rtFourierInverse, rtFourierSpectrum, rtFourierPhase);
+        //IDFTStart(rtFourierInverse, rtFourierSpectrum, rtFourierPhase);
         /** IDFT end **/
 
         /** FFT start **/
         //FFTStart(ref rtFourierSpectrum,ref rtFourierPhase);
         /** FFT END **/
 
+        BindTexture();
+    }
+
+    public void ShowFFT()
+    {
+        /** FFT start **/
+        FFTStart(ref rtFourierSpectrum,ref rtFourierPhase);
+        /** FFT END **/
+    }
+
+    public void ShowDFT()
+    {
+        /** DFT start **/
+        DFTStart(rtFourierSpectrum, rtReal, rtImaginary, rtFourierPhase);
+        /** DFT end **/
+
+        /** IDFT start **/
+        IDFTStart(rtFourierInverse, rtFourierSpectrum, rtFourierPhase);
+        /** IDFT end **/
+    }
+
+    void BindTexture()
+    {
         // 给mesh附上纹理
         forFourierSpectrumObj.material.SetTexture("_MainTex", rtFourierSpectrum);
         forFourierPhaseObj.material.SetTexture("_MainTex", rtFourierPhase);
@@ -60,13 +85,55 @@ public class Fourier : MonoBehaviour
 
     void FFTStart(ref RenderTexture rtFourierSpectrum, ref RenderTexture rtFourierPhase)
     {
+        int[] rev = BitReverse(256);
+
+        _compute.SetInts("rev", rev);
+        _compute.SetInt("minus", -1);
         int kernelHandleFastFourierH = _compute.FindKernel("FastFourier");
         
         _compute.SetTexture(kernelHandleFastFourierH, "rtFourierSpectrum", rtFourierSpectrum);
 
         _compute.SetTexture(kernelHandleFastFourierH, "rtFourierPhase", rtFourierPhase);
         _compute.SetTexture(kernelHandleFastFourierH, "originalImg", originalImg);
+
+        RenderTexture originalData = CreateRenderTexture(TextureSize);
+        Graphics.Blit(originalImg, originalData);
+        _compute.SetTexture(kernelHandleFastFourierH, "originalData", originalData);
         _compute.Dispatch(kernelHandleFastFourierH, GRID, GRID, 1);
+    }
+
+    int lim = 1;
+
+    /***
+    * bit翻转
+    * @param n
+    * @return
+    */
+    public int[] BitReverse(int n)
+    {
+        int[] rev = new int[128];
+
+        int len = 0;
+        lim = 1;
+        while (lim < n)
+        {
+            lim <<= 1;
+            len++;
+        }
+
+        for (int i = 0; i < lim; i++)
+        {
+            rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << (len - 1));
+            //rev[i>>1] 这个是找到子问题 i/2的下标
+            //rev[i>>1]>>1 右移一位, 取他的前n-1位
+            // i & 1 根据奇偶判断首位是0还是1 
+            // << len- 1 左移len-1位将其移动到首位
+            // 然后用按位或运算合并两者
+        }
+
+        int[] result = new int[n];
+        System.Array.Copy(rev, result, n);
+        return result;
     }
 
     //快速傅里叶变换分纵横的处理
@@ -79,27 +146,20 @@ public class Fourier : MonoBehaviour
 
         Graphics.Blit(originalImg, InputRT);
 
-
         for (int i = 0; i < (int)Mathf.Log(TextureSize, 2); i++)
         {
             int ns = (int)Mathf.Pow(2, i - 1);
             _compute.SetInt("Ns", ns);
-
             int kernelHandleFastFourierH = _compute.FindKernel("FastFourierH");
-
             ComputeFFT(kernelHandleFastFourierH, ref InputRT, ref OutputRT);
-
         }
 
         for (int i = 0; i < (int)Mathf.Log(TextureSize, 2); i++)
         {
             int ns = (int)Mathf.Pow(2, i - 1);
             _compute.SetInt("Ns", ns);
-
             int kernelHandleFastFourierV = _compute.FindKernel("FastFourierV");
-
             ComputeFFT(kernelHandleFastFourierV, ref InputRT, ref OutputRT);
-
         }
 
         Graphics.Blit(OutputRT, rtFourierSpectrum);
@@ -143,7 +203,6 @@ public class Fourier : MonoBehaviour
     }
 
     RenderTexture CreateRenderTexture(int size) {
-        
         RenderTexture rt = new RenderTexture(size,size,24);
         rt.format = RenderTextureFormat.ARGBFloat;
         rt.enableRandomWrite = true;

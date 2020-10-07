@@ -26,20 +26,25 @@ public class Main {
 			System.out.println(result[i].toString());
 		}
 		
+		System.out.println("------------- FFT Recursion -----------------");
 		
 		Complex[] resultFFT = Fourier.FFTRecursion(complexArray, -1);
-		System.out.println("------------- FFT Recursion -----------------");
 		for (int i = 0; i < resultFFT.length; i++) {
 			System.out.println(resultFFT[i].toString());
 		}
 		
 		System.out.println("------------- FFT Butterfly -----------------");
+		
 		Complex[] resultFFTButterfly = Fourier.FFTButterfly(complexArray, -1);
 		for (int i = 0; i < resultFFTButterfly.length; i++) {
 			System.out.println(resultFFTButterfly[i].toString());
 		}
+		
+		//²âÊÔÏÂ·­×ª256
+//		int[] list= Fourier.BitReverse(256);
+//		for (int i = 0; i < list.length; i++) {
+//			System.out.println(list[i]);
+//		}
+		
 	}
-	
-
-
 }

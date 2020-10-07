@@ -84,7 +84,7 @@ public class Fourier {
 	static int lim = 1;
 	
 	/***
-	 * 快速傅里叶变换利用蝶形网络的加速算法
+	 * 快速傅里叶变换利用蝶形网络的加速算法, Cooley-Tukey算法
 	 * @param list
 	 * @param minus
 	 * @return
@@ -102,6 +102,8 @@ public class Fourier {
 		}
 		
 		System.out.println("lim:"+lim);
+		Complex[] ak = new Complex[lim];
+		
 		for (int i = 1; i <= log2(lim); i++) {
 			int m = 1 << i;
 			double p = minus * 2  * Math.PI  / m;
@@ -120,6 +122,10 @@ public class Fourier {
 		
 		return list;
 	}
+	
+	public static Complex[] FFTStockham (Complex[] list,int minus) {
+		return null;
+	}
 
 	public static double log2(double N) {
 		return log(N,2);
@@ -132,7 +138,7 @@ public class Fourier {
 	 */
 	public static int[] BitReverse (int n) {
 		
-		int[] rev = new int[128];
+		int[] rev = new int[256];
 		
 		int len = 0;
 		lim = 1;

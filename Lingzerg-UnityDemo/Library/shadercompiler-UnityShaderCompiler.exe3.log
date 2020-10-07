@@ -1,4 +1,13 @@
 Base path: 'C:/Program Files/Unity/Hub/Editor/2019.4.8f1/Editor/Data', plugins path 'C:/Program Files/Unity/Hub/Editor/2019.4.8f1/Editor/Data/PlaybackEngines'
 Cmd: initializeCompiler
+Cmd: compileComputeKernel
+  error: 2 plat 4 at Fourier.compute(163): array dimensions must be literal scalar expressions
+  api=4 insize=6662 outsize=0 ok=0
+Cmd: compileComputeKernel
+  error: 2 plat 4 at Fourier.compute(165): array dimensions must be literal scalar expressions
+  api=4 insize=7019 outsize=0 ok=0
+Cmd: compileComputeKernel
+  error: 2 plat 4 at Fourier.compute(165): array dimensions must be literal scalar expressions
+  api=4 insize=7058 outsize=0 ok=0
 
 Quitting shader compiler process

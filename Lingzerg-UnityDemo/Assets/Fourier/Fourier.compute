@@ -21,6 +21,8 @@ RWTexture2D<float4> rtImaginary;
 RWTexture2D<float4> InputRT;
 RWTexture2D<float4> OutputRT;
 
+RWTexture2D<float4> originalData;
+
 Texture2D<float4> originalImg;
 
 int TextureSize = 512;
@@ -160,12 +162,14 @@ void FourierInverse(uint3 id : SV_DispatchThreadID)
     
 }
 
+int rev[512];
+int minus = -1;
+
 //快速傅里叶变换, 纵向处理
 [numthreads(16, 16, 1)]
 void FastFourier(uint3 id : SV_DispatchThreadID)
 {
     
-
 }
 
 //快速傅里叶变换,横向处理
@@ -180,6 +184,6 @@ void FastFourierH(uint3 id : SV_DispatchThreadID)
 [numthreads(16, 16, 1)]
 void FastFourierV(uint3 id : SV_DispatchThreadID)
 {
-   
+    
 }
 
