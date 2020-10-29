@@ -13,7 +13,12 @@ public class Fourier {
 	 * @param minus 正负值，DFT=-1，IDFT=1
 	 */
 	public static Complex[] DFT(Complex[] array, int minus) {
-	    int length = array.length;
+		
+
+		Complex[] list = array;
+		
+		
+	    int length = list.length;
 	    Complex[] complexArray = new Complex[length];
 	    // minus * 2 * PI / N
 	    double flag = minus * 2 * Math.PI / length;
@@ -21,7 +26,7 @@ public class Fourier {
 	        Complex sum = new Complex();
 	        for (int j = 0; j < length; j++) {
 	            //array[x] * e^((minus * 2 * PI * k / N)i)
-	            Complex complex = Complex.euler(flag * i * j).mul(array[j]);
+	            Complex complex = Complex.euler(flag * i * j).mul(list[j]);
 	            sum = complex.add(sum);
 	        }
 	        //累加
@@ -36,7 +41,11 @@ public class Fourier {
 	 * @param minus
 	 * @return
 	 */
-	public static Complex[] FFTRecursion(Complex[] list,int minus) {
+	public static Complex[] FFTRecursion(Complex[] array,int minus) {
+		
+		Complex[] list = array;
+		
+		
 		//lim进来就是除过2的, 所以lim=1, 就是数组里只有2个元素, 就不遍历了
 		if(list.length <= 1) {
 			return new Complex[]{list[0]};
@@ -89,8 +98,9 @@ public class Fourier {
 	 * @param minus
 	 * @return
 	 */
-	public static Complex[] FFTButterfly(Complex[] list,int minus) {
+	public static Complex[] FFTButterfly(Complex[] array,int minus) {
 		
+		Complex[] list = array;
 		int[] rev = BitReverse(list.length);
 		
 		for (int i = 0; i < lim; i++) {
@@ -100,9 +110,6 @@ public class Fourier {
 				list[rev[i]] = temp;
 			}
 		}
-		
-		System.out.println("lim:"+lim);
-		Complex[] ak = new Complex[lim];
 		
 		for (int i = 1; i <= log2(lim); i++) {
 			int m = 1 << i;
@@ -117,15 +124,63 @@ public class Fourier {
 					list[j+k+m/2] = u.sub(t);
 					w = w.mul(wn);
 				}
-			}
+			} 
 		}
-		
 		return list;
 	}
 	
-	public static Complex[] FFTStockham (Complex[] list,int minus) {
-		return null;
+	/***
+	 * 快速傅里叶变换 Stockham 算法,减少一次映射, 更适合GPU
+	 * @param list
+	 * @param minus
+	 * @return
+	 */
+	public static Complex[] FFTStockham (Complex[] array,int minus) {
+		Complex[] list = array;
+		int len = list.length;
+		
+		Complex[] templist = new Complex[8];
+		
+		for (int i = 1; i <= log2(len); i++) {
+			int m = 1 << i;
+			double p = minus * 2  * Math.PI  / m;
+			Complex wn = new Complex(Math.cos(p), Math.sin(p)); //单位根
+			
+			int btflyNo = 0;
+			for (int j = 0; j < len; j+=m) {
+				Complex w = new Complex(1); 
+				
+				for (int k = 0; k < m/2; k++) {
+					
+					int pow = i-1;
+					
+					int no0 = (int) (
+							Math.floor(btflyNo/(Math.pow(2, pow)))*(Math.pow(2, pow+1)) + Math.floorMod(btflyNo, (int) Math.pow(2,pow))
+							);
+					int no1 = (int) ( 
+							Math.floor(btflyNo/(Math.pow(2, pow)))*(Math.pow(2, pow+1)) + Math.floorMod(btflyNo, (int) Math.pow(2,pow)) + Math.pow(2, pow)
+							);
+					
+					//System.out.println("btflyNo:"+btflyNo+",m:"+m+ ",j:"+j+ ",K:"+k+", no0:"+no0 + ",no1:" + no1);
+					//System.out.println("btflyNo:"+btflyNo);
+					
+					Complex u = list[btflyNo];
+					Complex t = w.mul(list[btflyNo+len/2]);
+					
+					templist[no0] = u.add(t);
+					templist[no1] = u.sub(t);
+					w = w.mul(wn); //旋转w
+					btflyNo++;
+				}
+			}
+			//System.out.println("-----------------------------------");
+			Complex[] temp = list;
+			list = templist;
+			templist = temp;
+		}
+		return 	list;
 	}
+	
 
 	public static double log2(double N) {
 		return log(N,2);

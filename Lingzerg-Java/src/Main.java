@@ -9,7 +9,7 @@ public class Main {
 	    c.setReal(Math.cos(x));
 	    c.setImage(Math.sin(x));
 	    return c;
-	}
+	} 
 	
 	public static void main(String[] args) {
 		
@@ -19,9 +19,10 @@ public class Main {
 		
 		Complex[] complexArray = Complex.getComplexArray(arr);
 		Complex[] result = Fourier.DFT(complexArray, -1);
-
-		System.out.println("------------- DFT -----------------");
 		
+		//showComplexArray(complexArray);
+		
+		System.out.println("------------- DFT -----------------");
 		for (int i = 0; i < result.length; i++) {
 			System.out.println(result[i].toString());
 		}
@@ -40,11 +41,29 @@ public class Main {
 			System.out.println(resultFFTButterfly[i].toString());
 		}
 		
+		complexArray = Complex.getComplexArray(arr);
+
+		System.out.println("------------- FFT Stockham -----------------");
+		
+		Complex[] resultFFTStockham = Fourier.FFTStockham(complexArray, -1);
+		for (int i = 0; i < resultFFTStockham.length; i++) {
+			System.out.println(resultFFTStockham[i].toString());
+		}
+		
 		//²âÊÔÏÂ·­×ª256
 //		int[] list= Fourier.BitReverse(256);
 //		for (int i = 0; i < list.length; i++) {
 //			System.out.println(list[i]);
 //		}
+		
+	}
+
+	private static void showComplexArray(Complex[] complexArray) {
+		System.out.println("------------- show ComplexArray -----------------");
+		for (int i = 0; i < complexArray.length; i++) {
+			System.out.println(complexArray[i].toString());
+		}
+		System.out.println("------------- end ComplexArray -----------------");
 		
 	}
 }
