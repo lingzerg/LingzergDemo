@@ -7,7 +7,7 @@
 
 #### 二维傅里叶变换与逆变换基于Unity的实现
 
-![v2-b286db6275813aecd30c0c1c1690996d_b](https://github.com/lingzerg/LingzergDemo/blob/master/README.assets/v2-b286db6275813aecd30c0c1c1690996d_b.jpg)
+![v2-b286db6275813aecd30c0c1c1690996d_b](README.assets/v2-b286db6275813aecd30c0c1c1690996d_b.jpg)
 
 https://zhuanlan.zhihu.com/p/192659303
 
@@ -15,6 +15,6 @@ https://zhuanlan.zhihu.com/p/192659303
 
 #### PBR中的金属度和粗糙度以及BRDF中的FDG项
 
-![65D26C9D48ED17538438CB4D18856BDF](https://github.com/lingzerg/LingzergDemo/blob/master/README.assets/65D26C9D48ED17538438CB4D18856BDF.jpg)
+![65D26C9D48ED17538438CB4D18856BDF](README.assets/65D26C9D48ED17538438CB4D18856BDF.jpg)
 
 https://zhuanlan.zhihu.com/p/304191958
