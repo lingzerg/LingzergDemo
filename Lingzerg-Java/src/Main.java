@@ -9,7 +9,7 @@ public class Main {
 	    c.setReal(Math.cos(x));
 	    c.setImage(Math.sin(x));
 	    return c;
-	} 
+	}
 	
 	public static void main(String[] args) {
 		
@@ -50,7 +50,7 @@ public class Main {
 			System.out.println(resultFFTStockham[i].toString());
 		}
 		
-		//²âÊÔÏÂ·­×ª256
+		//ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½×ª256
 //		int[] list= Fourier.BitReverse(256);
 //		for (int i = 0; i < list.length; i++) {
 //			System.out.println(list[i]);

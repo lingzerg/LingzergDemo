@@ -10,3 +10,9 @@
 ![v2-b286db6275813aecd30c0c1c1690996d_b](README.assets/v2-b286db6275813aecd30c0c1c1690996d_b.jpg)
 
 https://zhuanlan.zhihu.com/p/192659303
+
+
+
+#### PBR中的金属度和粗糙度以及BRDF中的FDG项
+
+![65D26C9D48ED17538438CB4D18856BDF](/Users/binxie/Library/Containers/com.tencent.qq/Data/Library/Caches/Images/65D26C9D48ED17538438CB4D18856BDF.jpg)
