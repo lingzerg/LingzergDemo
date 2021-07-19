@@ -30,4 +30,8 @@
 *.exe
 *.out
 *.app
-*
+
+
+# Unreal forder
+Lingzerg-UnrealDemo\Lingzerg_UE_427_Demo\DerivedDataCache
+Lingzerg-UnrealDemo\Lingzerg_UE_427_DemoIntermediate
