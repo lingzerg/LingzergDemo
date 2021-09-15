@@ -33,5 +33,15 @@
 
 
 # Unreal forder
-Lingzerg-UnrealDemo\Lingzerg_UE_427_Demo\DerivedDataCache
-Lingzerg-UnrealDemo\Lingzerg_UE_427_DemoIntermediate
+Lingzerg-UnrealDemo/Lingzerg_UE_427_Demo/DerivedDataCache
+Lingzerg-UnrealDemo/Lingzerg_UE_427_DemoIntermediate
+
+# Unity forder
+Lingzerg-UnityDemo/Library
+Lingzerg-UnityDemo/Logs
+Lingzerg-UnityDemo/obj
+Lingzerg-UnityDemo/.vscode
+Lingzerg-UnityDemo/.vs
+Lingzerg-UnityDemo/obj
+Lingzerg-UnityDemo/Library
+Lingzerg-UnityDemo/Temp
