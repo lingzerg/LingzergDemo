@@ -1,4 +1,4 @@
-﻿Shader "Unlit/MyBRDF"
+﻿Shader "Woody/MyBRDF"
 {
     Properties
     {
@@ -52,7 +52,7 @@
                 Interpolators i;
                 i.vertex = UnityObjectToClipPos(v.vertex);
 				i.worldPos = mul(unity_ObjectToWorld, v.vertex);
-                
+                i.uv = 0;
                 i.normal = UnityObjectToWorldNormal(v.normal);
                 i.normal = normalize(i.normal);
                 return i;
