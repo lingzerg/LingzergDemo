@@ -46,3 +46,8 @@ Lingzerg-UnityDemo/obj
 Lingzerg-UnityDemo/Library
 Lingzerg-UnityDemo/Temp
 Lingzerg-UnityDemo/.vs
+
+# WoodyRenderingPipeline forder
+WoodyRenderingPipeline/.vs
+WoodyRenderingPipeline/Debug
+WoodyRenderingPipeline/x64
