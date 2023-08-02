@@ -15,6 +15,31 @@ struct Pixel {
 
 #include <iostream>
 #include <fstream>
+#include <thread>
+#include <mutex>
+#include <future>
+#include <atomic>
+
+/****** Image ******/
+const auto aspect_ratio = 16.0 / 9.0;
+const int image_width = 400;
+const int image_height = static_cast<int>(image_width / aspect_ratio);
+const int samples_per_pixel = 100;
+
+
+const int J = 225;
+const int I = 400;
+
+
+/****** World ******/
+hittable_list world;
+
+/****** Camera ******/
+camera cam;
+
+std::vector<Pixel> pixelList(90000);
+std::mutex pixelList_mutex;
+std::atomic<int> tasks_completed(0);
 
 color ray_color(const ray& r, const hittable& world, int depth) {
     hit_record rec;
@@ -32,52 +57,102 @@ color ray_color(const ray& r, const hittable& world, int depth) {
     return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0);
 }
 
+Pixel render(int i, int j) {
+    color pixel_color(0, 0, 0);
+    for (int s = 0; s < samples_per_pixel; ++s) {
+        auto u = (i + random_double()) / (image_width - 1);
+        auto v = (j + random_double()) / (image_height - 1);
+        ray r = cam.get_ray(u, v);
+        int max_depth = 50;
+        pixel_color += ray_color(r, world, max_depth);
+    }
+    return write_color(std::cout, pixel_color, samples_per_pixel);
+}
 
-std::vector<Pixel> pixelList;
+// 线程函数
+void worker(int start, int end) {
+    for (int k = start; k < end; ++k) {
+        int j = k / 400;
+        int i = k % 400;
+        int index = i + j*400;
+        
+        // 将计算结果写入vector
+        Pixel p = render(i, 225-j);
+
+        std::unique_lock<std::mutex> lock(pixelList_mutex);
+        pixelList[index] = p;
+        lock.unlock();
+        // 更新已完成任务计数
+        tasks_completed.fetch_add(1);
+    }
+}
 
 int main() {
     
-    // Image
-    const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 400;
-    const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 100;
-    const int max_depth = 50;
+    
+    // 记录开始时间
+    auto start_time = std::chrono::high_resolution_clock::now();
 
-    // World
-    hittable_list world;
+    /****** World ******/
     world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
     world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
 
-    // Camera
-    camera cam;
     
-    // Render
+    /****** Render ******/ 
+
     //std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                ray r = cam.get_ray(u, v);
-                pixel_color += ray_color(r, world, max_depth);
-            }
-            pixelList.push_back(write_color(std::cout, pixel_color, samples_per_pixel));
-        }
+    const int num_threads = 12;
+    const int total_tasks = 90000;
+    const int tasks_per_thread = 7500;
+
+    std::vector<std::thread> threads; // 存储线程的vector
+    std::mutex results_mutex; // 保护results的互斥锁
+    std::vector<std::future<void>> futures;
+
+    // 使用std::async启动线程并获取std::future
+    for (int t = 0; t < num_threads; ++t) {
+        int start = t * tasks_per_thread;
+        int end = (t == num_threads - 1) ? total_tasks : start + tasks_per_thread;
+        futures.push_back(std::async(std::launch::async, worker, start, end));
     }
 
+    // 监控线程的执行进度
+    while (tasks_completed.load() < total_tasks) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::cout << "Tasks completed: " << tasks_completed.load() << "/" << total_tasks << std::endl;
+    }
+
+    // 等待所有线程完成
+    for (auto& f : futures) {
+        f.wait();
+    }
+
+    //for (int j = image_height - 1; j >= 0; --j) {
+    //    std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+    //    for (int i = 0; i < image_width; ++i) {
+    //        color pixel_color(0, 0, 0);
+    //        for (int s = 0; s < samples_per_pixel; ++s) {
+    //            auto u = (i + random_double()) / (image_width - 1);
+    //            auto v = (j + random_double()) / (image_height - 1);
+    //            ray r = cam.get_ray(u, v);
+    //            pixel_color += ray_color(r, world, max_depth);
+    //        }
+    //        pixelList.push_back(write_color(std::cout, pixel_color, samples_per_pixel));
+    //    }
+    //}
+
+    /****** io ******/
+
     // 打开一个文件以写入数据
-    std::ofstream outfile("output.ppm", std::ios::out);
+    std::ofstream outfile("image.ppm", std::ios::out);
 
     // 检查文件是否成功打开
     if (!outfile.is_open()) {
         std::cerr << "Error: Unable to open the file." << "\n";
         return 1;
     }
-    outfile << "P3\n" << '\n' << image_width << ' ' << image_height << "\n255\n";
+    outfile << "P3\n" << image_width << ' ' << image_height << "\n255\n";
     
     // 遍历std::vector，并将每个Person结构的数据写入文件
     for (const Pixel& p : pixelList) {
@@ -86,6 +161,17 @@ int main() {
 
     // 关闭文件输出流
     outfile.close();
+
+
+    // 记录结束时间
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    // 计算执行时间
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+
+    // 打印执行时间
+    std::cout << "Program execution time: " << duration << " milliseconds" << std::endl;
+
 
     std::cerr << "\nDone.\n";
 }
