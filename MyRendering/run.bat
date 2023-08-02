@@ -1,0 +1,1 @@
+Debug\MyRendering.exe > image.ppm
